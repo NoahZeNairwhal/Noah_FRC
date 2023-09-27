@@ -5,16 +5,15 @@ import java.util.EnumSet;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.NetworkTableEvent;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.NetworkTableListener;
 import edu.wpi.first.networktables.StringSubscriber;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class RaspberryMain {
     static BooleanPublisher waitConfirmer;
     static StringSubscriber instructionReader;
-    static NetworkTableListener instructionListener;
+    static int instructionListener;
     static RaspberryMaster master;
-    static NetworkTableListener closeListener;
+    static int closeListener;
     public static void main(String[] args) {
         master = new RaspberryMaster();
 
@@ -25,7 +24,7 @@ public class RaspberryMain {
 
         waitConfirmer = inst.getBooleanTopic("/raspberry/waiting").publish();
         instructionReader = inst.getStringTopic("/raspberry/instructions").subscribe("");
-        instructionListener = NetworkTableListener.createListener(inst.getTopic("/raspberry/instructions"), EnumSet.of(NetworkTableEvent.Kind.kValueAll), event -> {
+        instructionListener = inst.addListener(inst.getTopic("/raspberry/instructions"), EnumSet.of(NetworkTableEvent.Kind.kValueAll), event -> {
             if(event.is(NetworkTableEvent.Kind.kValueAll)) {
                 String instruction = instructionReader.get();
 
@@ -76,7 +75,7 @@ public class RaspberryMain {
             }
         });
 
-        closeListener = NetworkTableListener.createListener(inst.getTopic("/robot/isOn"), EnumSet.of(NetworkTableEvent.Kind.kDisconnected), event -> {
+        closeListener = inst.addListener(inst.getTopic("/robot/isOn"), EnumSet.of(NetworkTableEvent.Kind.kDisconnected), event -> {
             if(event.is(NetworkTableEvent.Kind.kDisconnected)) {
                 master.close();
             }

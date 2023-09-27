@@ -7,7 +7,6 @@ import java.util.EnumSet;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.NetworkTableEvent;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.NetworkTableListener;
 import edu.wpi.first.networktables.StringSubscriber;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -15,12 +14,12 @@ public class LaptopMain {
     static BooleanPublisher fileWaiting;
     static StringSubscriber fileContent;
     static StringSubscriber filePath;
-    static NetworkTableListener fileWriter;
+    static int fileWriter;
     static BooleanPublisher waitConfirmer;
     static StringSubscriber instructionReader;
-    static NetworkTableListener instructionListener;
+    static int instructionListener;
     static LaptopMaster master;
-    static NetworkTableListener closeListener;
+    static int closeListener;
 
     public static void main(String[] args) {
         NetworkTableInstance inst = NetworkTableInstance.getDefault();
@@ -31,7 +30,7 @@ public class LaptopMain {
         fileWaiting = inst.getBooleanTopic("/laptop/fileWrite/waiting").publish();
         filePath = inst.getStringTopic("/laptop/fileWrite/path").subscribe("");
         fileContent = inst.getStringTopic("/laptop/fileWrite/content").subscribe("");
-        fileWriter = NetworkTableListener.createListener(inst.getTopic("/laptop/fileWrite"), EnumSet.of(NetworkTableEvent.Kind.kValueAll), event -> {
+        fileWriter = inst.addListener(inst.getTopic("/laptop/fileWrite"), EnumSet.of(NetworkTableEvent.Kind.kValueAll), event -> {
             if(event.is(NetworkTableEvent.Kind.kValueAll)) {
                 fileWaiting.set(false);
                 inst.flush();
@@ -54,7 +53,7 @@ public class LaptopMain {
 
         waitConfirmer = inst.getBooleanTopic("/laptop/waiting").publish();
         instructionReader = inst.getStringTopic("/laptop/instructions").subscribe("");
-        instructionListener = NetworkTableListener.createListener(inst.getTopic("/laptop/instructions"), EnumSet.of(NetworkTableEvent.Kind.kValueAll), event -> {
+        instructionListener = inst.addListener(inst.getTopic("/laptop/instructions"), EnumSet.of(NetworkTableEvent.Kind.kValueAll), event -> {
             if(event.is(NetworkTableEvent.Kind.kValueAll)) {
                 String instruction = instructionReader.get();
 
@@ -105,7 +104,7 @@ public class LaptopMain {
             }
         });
 
-        closeListener = NetworkTableListener.createListener(inst.getTopic("/robot/isOn"), EnumSet.of(NetworkTableEvent.Kind.kDisconnected), event -> {
+        closeListener = inst.addListener(inst.getTopic("/robot/isOn"), EnumSet.of(NetworkTableEvent.Kind.kDisconnected), event -> {
             if(event.is(NetworkTableEvent.Kind.kDisconnected)) {
                 master.close();
             }

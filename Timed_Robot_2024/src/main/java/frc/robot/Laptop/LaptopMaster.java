@@ -1,12 +1,9 @@
 package frc.robot.Laptop;
 
 public class LaptopMaster {
-    InformationComparer myInformationComparer;
-
     public LaptopMaster() {}
 
     public void robotInit() {
-        myInformationComparer = new InformationComparer();
     }
 
     public void robotPeriodic() {
@@ -46,6 +43,5 @@ public class LaptopMaster {
     }
 
     public void close() {
-        myInformationComparer.close();
     }
 }

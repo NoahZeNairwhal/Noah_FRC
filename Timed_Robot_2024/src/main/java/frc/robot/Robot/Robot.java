@@ -12,7 +12,6 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.NetworkTableEvent;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.NetworkTableListener;
 import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.wpilibj.PS4Controller;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -36,8 +35,10 @@ public class Robot extends TimedRobot {
   String motorControllerFile;
   BooleanSubscriber raspberryWaiting;
   StringPublisher raspberryInstructions;
+  int raspberryInstructionsListener;
   BooleanSubscriber laptopWaiting;
   StringPublisher laptopInstructions;
+  int laptopInstructionsListener;
   StringPublisher robotIsOn;
   
   /**
@@ -70,7 +71,43 @@ public class Robot extends TimedRobot {
     new Motors(leftUpCanSparkMax, false, rightUpCanSparkMax, true, rightDownCanSparkMax, true, leftDownCanSparkMax, false), 
     false, motorControllerFile);
 
-    instruct("robotInit");
+    if(!raspberryWaiting.get()) {
+      raspberryInstructions.set("robotInit");
+      inst.flush();
+    } else {
+      BooleanSubscriber waiting = inst.getBooleanTopic("/raspberry/waiting").subscribe(false);
+
+      int waitListener = inst.addListener(inst.getTopic("/raspberry/waiting"), EnumSet.of(NetworkTableEvent.Kind.kValueAll), event -> {
+        if(event.is(NetworkTableEvent.Kind.kValueAll) && waiting.get()) {
+          raspberryInstructions.set("robotInit");
+          inst.flush();
+
+          waiting.close();
+          this.close();
+        }
+      });
+
+      waitListener = waitListener + 0;
+    }
+
+    if(!laptopWaiting.get()) {
+      laptopInstructions.set("robotInit");
+      inst.flush();
+    } else {
+      BooleanSubscriber waiting = inst.getBooleanTopic("/laptop/waiting").subscribe(false);
+
+      int waitListener = inst.addListener(inst.getTopic("/laptop/waiting"), EnumSet.of(NetworkTableEvent.Kind.kValueAll), event -> {
+        if(event.is(NetworkTableEvent.Kind.kValueAll) && waiting.get()) {
+          laptopInstructions.set("robotInit");
+          inst.flush();
+
+          waiting.close();
+          this.close();
+        }
+      });
+      
+      waitListener = waitListener + 0;
+    }
   }
 
   /**
@@ -127,30 +164,38 @@ public class Robot extends TimedRobot {
       raspberryInstructions.set(instructions);
       inst.flush();
     } else {
-      @SuppressWarnings("unused")
-      NetworkTableListener waitListener = NetworkTableListener.createListener(inst.getTopic("/raspberry/waiting"), EnumSet.of(NetworkTableEvent.Kind.kValueAll), event -> {
-        if(event.is(NetworkTableEvent.Kind.kValueAll) && raspberryWaiting.get()) {
+      BooleanSubscriber waiting = inst.getBooleanTopic("/raspberry/waiting").subscribe(false);
+
+      int waitListener = inst.addListener(inst.getTopic("/raspberry/waiting"), EnumSet.of(NetworkTableEvent.Kind.kValueAll), event -> {
+        if(event.is(NetworkTableEvent.Kind.kValueAll) && waiting.get()) {
           raspberryInstructions.set(instructions);
           inst.flush();
 
+          waiting.close();
           this.close();
         }
       });
+
+      waitListener = waitListener + 0;
     }
 
     if(!laptopWaiting.get()) {
       laptopInstructions.set(instructions);
       inst.flush();
     } else {
-      @SuppressWarnings("unused")
-      NetworkTableListener waitListener = NetworkTableListener.createListener(inst.getTopic("/laptop/waiting"), EnumSet.of(NetworkTableEvent.Kind.kValueAll), event -> {
-        if(event.is(NetworkTableEvent.Kind.kValueAll) && laptopWaiting.get()) {
+      BooleanSubscriber waiting = inst.getBooleanTopic("/laptop/waiting").subscribe(false);
+
+      int waitListener = inst.addListener(inst.getTopic("/laptop/waiting"), EnumSet.of(NetworkTableEvent.Kind.kValueAll), event -> {
+        if(event.is(NetworkTableEvent.Kind.kValueAll) && waiting.get()) {
           laptopInstructions.set(instructions);
           inst.flush();
 
+          waiting.close();
           this.close();
         }
       });
+      
+      waitListener = waitListener + 0;
     }
   }
 }
